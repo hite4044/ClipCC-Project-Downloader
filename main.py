@@ -70,17 +70,23 @@ class Project:
 
     def decrypt_raw_data(self):
         print("解密元数据")
-        key = b'clipccyydsclipccyydsclipccyydscc'
-        iv = b'clipteamyydsclip'
-        decrypter = AES.new(key, AES.MODE_CBC, IV=iv)
-        self.json_text = decrypter.decrypt(pad(self.raw_data, AES.block_size))
-        self.json_text = self.json_text[:self.json_text.rfind(b'"}}') + 3]
-        self.json_text = self.json_text.decode()
+        try:
+            self.json_text = self.raw_data.decode()
+        except UnicodeDecodeError:
+            key = b'clipccyydsclipccyydsclipccyydscc'
+            iv = b'clipteamyydsclip'
+            decrypter = AES.new(key, AES.MODE_CBC, IV=iv)
+            self.json_text = decrypter.decrypt(pad(self.raw_data, AES.block_size))
+            self.json_text = self.json_text[:self.json_text.rfind(b'"}}') + 3]
+            self.json_text = self.json_text.decode()
         print("解密完成, 解密后数据大小:", format_size(len(self.json_text.encode())))
 
     def get_project_json(self):
         print("加载JSON...")
         self.json = json_loads(self.json_text)  # 加载为json
+        if isinstance(self.json, dict) and self.json.get("code"):
+            print("获取项目JSON失败:", self.json.get("message"))
+            raise ValueError("获取项目数据失败:", self.json.get("message"))
 
     def get_asset_urls(self):
         print("过滤出资源名")
@@ -136,5 +142,5 @@ class Project:
 
 
 if __name__ == "__main__":
-    project = Project(4368)
+    project = Project(4864)
     project.download_project("test")
